@@ -48,14 +48,20 @@
      do (draw-line* (find-pane-named *application-frame* 'canvas) 0 (* i *taille-carre*)
 		    (* 500 *taille-carre*) (* i *taille-carre*))))
 
+(defun draw-collored-square (x y color)
+  (draw-rectangle* (find-pane-named *application-frame* 'canvas)
+					    (+ (* x *taille-carre*) 1) (+ (* y *taille-carre*) 1)
+					    (- (+ *taille-carre* (* x *taille-carre*)) 1) (- (+ *taille-carre* (* y *taille-carre*)) 1)
+					    :ink color))
 (defun fill-canvas ()
   (dotimes (x (length *map*))
     (dotimes (y (length *map*))
       (let ((cas (nth x (nth y *map*))))
 	(cond
-	  ((not (= 0 cas)) (draw-rectangle* (find-pane-named *application-frame* 'canvas)
-					    (* x *taille-carre*) (* y *taille-carre*)
-					    (+ *taille-carre* (* x *taille-carre*)) (+ *taille-carre* (* y *taille-carre*)))))))))
+	  ((= 0 cas) (draw-collored-square x y +blue+))
+	  ((= 1 cas) (draw-collored-square x y +green+))
+	  ((= 2 cas) (draw-collored-square x y +red+))
+	  ((= 3 cas) (draw-collored-square x y +grey+)))))))
 
 (define-map-editor-command (com-refresh :name t) ()
   ())
