@@ -48,34 +48,36 @@
      do (draw-line* (find-pane-named *application-frame* 'canvas) 0 (* i *taille-carre*)
 		    (* 500 *taille-carre*) (* i *taille-carre*))))
 
-(defun draw-collored-square (x y color)
+(defun draw-colored-square (x y color)
   (draw-rectangle* (find-pane-named *application-frame* 'canvas)
 					    (+ (* x *taille-carre*) 1) (+ (* y *taille-carre*) 1)
 					    (- (+ *taille-carre* (* x *taille-carre*)) 1) (- (+ *taille-carre* (* y *taille-carre*)) 1)
 					    :ink color))
+
 (defun fill-canvas ()
   (dotimes (x (length *map*))
     (dotimes (y (length *map*))
       (let ((cas (nth x (nth y *map*))))
 	(cond
-	  ((= 0 cas) (draw-collored-square x y +blue+))
-	  ((= 1 cas) (draw-collored-square x y +green+))
-	  ((= 2 cas) (draw-collored-square x y +red+))
-	  ((= 3 cas) (draw-collored-square x y +grey+)))))))
+	  ((= 0 cas) (draw-colored-square x y +blue+))
+	  ((= 1 cas) (draw-colored-square x y +green+))
+	  ((= 2 cas) (draw-colored-square x y +red+))
+	  ((= 3 cas) (draw-colored-square x y +grey+))
+	  (t (draw-colored-square x y +white+)))))))
 
 (define-map-editor-command (com-refresh :name t) ()
   ())
 
-(define-map-editor-command (com-touche :name t) ()
-  (handle-pointer (find-pane-named *application-frame* 'canvas)))
+(define-map-editor-command (com-touche :name t) ((n 'integer))
+  (handle-pointer (find-pane-named *application-frame* 'canvas) n))
 
 (define-map-editor-command (com-quit :name t) ()
   (frame-exit *application-frame*))
 
-(defun handle-pointer (pane)
+(defun handle-pointer (pane value)
   (tracking-pointer (pane)
     (:pointer-button-release (&key event x y)
-			     (change-map (truncate (/ x *taille-carre*)) (truncate (/ y *taille-carre*)))
+			     (change-map (truncate (/ x *taille-carre*)) (truncate (/ y *taille-carre*)) value)
 			     (return-from handle-pointer))))
 
 (defun change-map (x y &optional value)
