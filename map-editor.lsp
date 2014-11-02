@@ -5,6 +5,7 @@
 (in-package :map-editor)
 
 (defvar *taille-carre* 30)
+(defvar *click-val* 0)
 (defvar *map*
   '((0 0 0 0 0)
     (0 0 0 0 0)
@@ -57,7 +58,7 @@
 (defun fill-canvas ()
   (dotimes (x (length *map*))
     (dotimes (y (length *map*))
-      (let ((cas (nth x (nth y *map*))))
+      (let ((cas (elt (elt *map* y) x)))
 	(cond
 	  ((= 0 cas) (draw-colored-square x y +blue+))
 	  ((= 1 cas) (draw-colored-square x y +green+))
@@ -68,9 +69,22 @@
 (define-map-editor-command (com-refresh :name t) ()
   ())
 
-(define-map-editor-command (com-touche :name t) ((n 'integer))
-  (handle-pointer (find-pane-named *application-frame* 'canvas) n))
+(define-map-editor-command (com-set-value :name t) ((n 'integer))
+  (setf *click-val* n))
 
+(define-map-editor-command (com-touche :name t) ()
+  (handle-pointer (find-pane-named *application-frame* 'canvas) *click-val*))
+
+(define-map-editor-command (com-set-size :name t) ((x 'integer) (y 'integer))
+  (dotimes (i (length *map*))		; x
+    (setf *map* (resize-map *map* x)))
+  (dotimes (i (length *map*))
+    (setf (elt *map* i) (resize-map (elt *map* i) y)))
+  (dotimes (i (length *map*))
+    (dotimes (j (length (elt *map* i)))
+      (if (eq (elt (elt *map* i) j) nil)
+	  (setf (elt (elt *map* i) j) 0)))))
+  
 (define-map-editor-command (com-quit :name t) ()
   (frame-exit *application-frame*))
 
@@ -79,6 +93,16 @@
     (:pointer-button-release (&key event x y)
 			     (change-map (truncate (/ x *taille-carre*)) (truncate (/ y *taille-carre*)) value)
 			     (return-from handle-pointer))))
+
+(defun resize-map (set n)
+  (cond 
+    ((= (length set) n) nil)
+    ((> (length set) n)			; Plus grand
+     (setf set (subseq set 0 n)))
+    ((< (length set) n)			;Plus petit
+     (dotimes (i (- n (length set)))
+       (setf set (cons nil set)))))
+  set)
 
 (defun change-map (x y &optional value)
   (setf (nth x (nth y *map*)) (or value (if (= 0 (nth x (nth y *map*))) 1 0))))
