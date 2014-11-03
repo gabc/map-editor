@@ -26,16 +26,21 @@
 
 (define-application-frame map-editor ()
   ()
+  ;; (:command-table (map-editor :inherit-from 
+  ;; 			      (clim::accept-values-pane)))
+  ;; (:command-definer t)
   (:panes
    (canvas (make-pane 'canvas-pane
+		      ;; :accept-values 
 		      :name 'canvas
 		      :incremental-redisplay t
-		      :display-function 'display-canvas))
+		      :display-function 'display-canvas
+		      :display-after-commands t))
    (int :interactor
 	:width 100
 	:height 50))
-   (:layouts
-    (default canvas int)))
+  (:layouts
+   (default canvas int)))
 
 (defun display-canvas (frame pane)
   (draw)
@@ -56,15 +61,16 @@
 					    :ink color))
 
 (defun fill-canvas ()
-  (dotimes (x (length *map*))
-    (dotimes (y (length *map*))
-      (let ((cas (elt (elt *map* y) x)))
-	(cond
-	  ((= 0 cas) (draw-colored-square x y +blue+))
-	  ((= 1 cas) (draw-colored-square x y +green+))
-	  ((= 2 cas) (draw-colored-square x y +red+))
-	  ((= 3 cas) (draw-colored-square x y +grey+))
-	  (t (draw-colored-square x y +white+)))))))
+  (loop for x upto (- (length *map*) 1)
+     do (loop for y upto (- (length (elt *map* x)) 1)
+	   do (let ((cas (nth y (nth x *map*))))
+		(cond
+		  ((eq nil cas) ())
+		  ((= 0 cas) (draw-colored-square y x +blue+))
+		  ((= 1 cas) (draw-colored-square y x +green+))
+		  ((= 2 cas) (draw-colored-square y x +red+))
+		  ((= 3 cas) (draw-colored-square y x +grey+))
+		  (t (draw-colored-square y x +white+)))))))
 
 (define-map-editor-command (com-refresh :name t) ()
   ())
