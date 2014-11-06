@@ -6,19 +6,28 @@
 
 (defvar *taille-carre* 30)
 (defvar *click-val* 0)
-(defvar *map*
-  '((0 0 0 0 0)
-    (0 0 0 0 0)
-    (1 0 0 0 1)
-    (1 1 1 1 1)
-    (2 2 3 2 2)))
+(defvar *save-file*)
+(defvar *save-format*)
 
-(setq *map*
-  '((0 0 0 0 0)
-    (0 0 0 0 0)
-    (1 0 0 0 1)
-    (1 1 1 1 1)
-    (2 2 3 2 2)))
+(defclass node ()
+    ((pos-x
+      :initarg :pos-x
+      :initform 0)
+     (pos-y
+      :initarg :pos-y
+      :initform 0)
+     (value
+      :initarg :value
+      :initform 0)))
+
+(defvar *map* '())
+(defvar *max-x* 5)
+(defvar *max-y* 5)
+
+(defun init-map ()
+  (loop for i upto *max-x*
+     do (loop for j upto *max-y*
+	   do (push (make-instance 'node :pos-x i :pos-y j :value 0) *map*))))
 
 (defclass canvas-pane (application-pane)
   ((first-point-x :initform nil)
@@ -56,15 +65,13 @@
 					    :ink color))
 
 (defun fill-canvas ()
-  (dotimes (x (length *map*))
-    (dotimes (y (length *map*))
-      (let ((cas (elt (elt *map* y) x)))
-	(cond
-	  ((= 0 cas) (draw-colored-square x y +blue+))
-	  ((= 1 cas) (draw-colored-square x y +green+))
-	  ((= 2 cas) (draw-colored-square x y +red+))
-	  ((= 3 cas) (draw-colored-square x y +grey+))
-	  (t (draw-colored-square x y +white+)))))))
+  (dolist (n *map*)
+    (case (slot-value n 'value)
+      (0 (draw-colored-square (slot-value n 'pos-x) (slot-value n 'pos-y) +blue+))
+      (1 (draw-colored-square (slot-value n 'pos-x) (slot-value n 'pos-y) +green+))
+      (2 (draw-colored-square (slot-value n 'pos-x) (slot-value n 'pos-y) +red+))
+      (3 (draw-colored-square (slot-value n 'pos-x) (slot-value n 'pos-y) +grey+))
+      (t (draw-colored-square (slot-value n 'pos-x) (slot-value n 'pos-y) +white+)))))
 
 (define-map-editor-command (com-refresh :name t) ()
   ())
@@ -75,18 +82,34 @@
 (define-map-editor-command (com-touche :name t) ()
   (handle-pointer (find-pane-named *application-frame* 'canvas) *click-val*))
 
-(define-map-editor-command (com-set-size :name t) ((x 'integer) (y 'integer))
-  (dotimes (i (length *map*))		; x
-    (setf *map* (resize-map *map* x)))
-  (dotimes (i (length *map*))
-    (setf (elt *map* i) (resize-map (elt *map* i) y)))
-  (dotimes (i (length *map*))
-    (dotimes (j (length (elt *map* i)))
-      (if (eq (elt (elt *map* i) j) nil)
-	  (setf (elt (elt *map* i) j) 0)))))
+;; (define-map-editor-command (com-set-size :name t) ((x 'integer) (y 'integer))
+;;   (let ((dx (- x *max-x*))		;Changes we're asked to make
+;; 	(dy (- y *max-y*)))
+;;     (if (> dx 0)				;Append x
+;;        (dotimes (i dx)
+;; 	 (incf *max-x*)
+;; 	 (push (make-instance 'node :pos-x *max-x* :pos-y *max-y* :value 0) *map*)))
+;;     (if (> dy 0)				;Append y
+;;        (dotimes (i dy)
+;; 	 (incf *max-y*)
+;; 	 (push (make-instance 'node :pos-x *max-x* :pos-y *max-y* :value 0) *map*)))
+;;     (if (and (< dx 0) (< dy 0)
+;; 	(remove-if (lambda (n) (< (slot-value n 'pos-x) x)
+;;   ))))))
   
 (define-map-editor-command (com-quit :name t) ()
   (frame-exit *application-frame*))
+
+(define-map-editor-command (com-set-save :name t) ((s 'string))
+  (setf *save-file* (merge-pathnames s)))
+
+(define-map-editor-command (com-save :name t) ()
+  (with-open-file (s *save-file* :direction :output :if-exists :supersede); :if-does-not-exists :create)
+    (dolist (n *map*)
+      (format s (or *save-format* "~a ~a ~a~%") (slot-value n 'pos-x) (slot-value n 'pos-y) (slot-value n 'value)))))
+
+(define-map-editor-command (com-set-save-format :name t) ((s 'string))
+  (setf *save-format* s))
 
 (defun handle-pointer (pane value)
   (tracking-pointer (pane)
@@ -105,7 +128,12 @@
   set)
 
 (defun change-map (x y &optional value)
-  (setf (nth x (nth y *map*)) (or value (if (= 0 (nth x (nth y *map*))) 1 0))))
+  (dolist (n *map*)
+    (if (and
+	 (= (slot-value n 'pos-x) x)
+	 (= (slot-value n 'pos-y) y))
+	(setf (slot-value n 'value) (or value (if (= 0 (nth x (nth y *map*))) 1 0))))))
+  ;; (setf (nth x (nth y *map*)) (or value (if (= 0 (nth x (nth y *map*))) 1 0))))
 
 (defun map-editor-main ()
   (run-frame-top-level (make-application-frame 'map-editor)))
