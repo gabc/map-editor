@@ -24,9 +24,9 @@
 (defvar *max-x* 5)
 (defvar *max-y* 5)
 
-(defun init-map ()
-  (loop for i upto *max-x*
-     do (loop for j upto *max-y*
+(defun init-map (x y)
+  (loop for i upto (- x 1)
+     do (loop for j upto (- y 1)
 	   do (push (make-instance 'node :pos-x i :pos-y j :value 0) *map*))))
 
 (defclass canvas-pane (application-pane)
@@ -35,12 +35,8 @@
 
 (define-application-frame map-editor ()
   ()
-  ;; (:command-table (map-editor :inherit-from 
-  ;; 			      (clim::accept-values-pane)))
-  ;; (:command-definer t)
   (:panes
    (canvas (make-pane 'canvas-pane
-		      ;; :accept-values 
 		      :name 'canvas
 		      :incremental-redisplay t
 		      :display-function 'display-canvas
@@ -84,23 +80,13 @@
 (define-map-editor-command (com-set-value :name t) ((n 'integer))
   (setf *click-val* n))
 
-(define-map-editor-command (com-touche :name t) ()
-  (handle-pointer (find-pane-named *application-frame* 'canvas) *click-val*))
+(define-map-editor-command (com-touche :name t) ((x 'integer) (y 'integer))
+  (change-map (truncate (/ x *taille-carre*)) (truncate (/ y *taille-carre*)) *click-val*))
+  ;(handle-pointer (find-pane-named *application-frame* 'canvas) *click-val*))
 
-;; (define-map-editor-command (com-set-size :name t) ((x 'integer) (y 'integer))
-;;   (let ((dx (- x *max-x*))		;Changes we're asked to make
-;; 	(dy (- y *max-y*)))
-;;     (if (> number more-numbers...dx 0)				;Append x
-;;        (dotimes (i dx)
-;; 	 (incf *max-x*)
-;; 	 (push (make-instance 'node :pos-x *max-x* :pos-y *max-y* :value 0) *map*)))
-;;     (if (> dy 0)				;Append y
-;;        (dotimes (i dy)
-;; 	 (incf *max-y*)
-;; 	 (push (make-instance 'node :pos-x *max-x* :pos-y *max-y* :value 0) *map*)))
-;;     (if (and (< dx 0) (< dy 0)
-;; 	(remove-if (lambda (n) (< (slot-value n 'pos-x) x)
-;;   ))))))
+(define-map-editor-command (com-set-size :name t) ((x 'integer) (y 'integer))
+  (setf *map* ())
+  (init-map x y))
   
 (define-map-editor-command (com-quit :name t) ()
   (frame-exit *application-frame*))
@@ -138,7 +124,14 @@
 	 (= (slot-value n 'pos-x) x)
 	 (= (slot-value n 'pos-y) y))
 	(setf (slot-value n 'value) (or value (if (= 0 (nth x (nth y *map*))) 1 0))))))
-  ;; (setf (nth x (nth y *map*)) (or value (if (= 0 (nth x (nth y *map*))) 1 0))))
 
 (defun map-editor-main ()
   (run-frame-top-level (make-application-frame 'map-editor)))
+
+(define-presentation-to-command-translator touche-map
+    (blank-area com-touche map-editor
+		:gesture :select
+		:echo nil
+		:tester ((window) (typep window 'canvas-pane)))
+    (x y)
+  (list x y))
