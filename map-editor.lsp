@@ -123,7 +123,6 @@
 	 (= (slot-value n 'pos-x) x)
 	 (= (slot-value n 'pos-y) y))
 	(setf (slot-value n 'value) (or value (if (= 0 (nth x (nth y *map*))) 1 0))))))
-  ;; (setf (nth x (nth y *map*)) (or value (if (= 0 (nth x (nth y *map*))) 1 0))))
 
 (defun map-editor-main ()
   (run-frame-top-level (make-application-frame 'map-editor)))
