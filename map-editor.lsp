@@ -24,10 +24,12 @@
 (defvar *max-x* 5)
 (defvar *max-y* 5)
 
-(defun init-map ()
-  (loop for i upto *max-x*
-     do (loop for j upto *max-y*
-	   do (push (make-instance 'node :pos-x i :pos-y j :value 0) *map*))))
+(defun init-map (x y)
+  (let ((map))
+    (loop for i upto (- x 1)
+       do (loop for j upto (- y 1)
+	     do (push (make-instance 'node :pos-x i :pos-y j :value 0) map)))
+  map))
 
 (defclass canvas-pane (application-pane)
   ((first-point-x :initform nil)
@@ -82,20 +84,8 @@
 (define-map-editor-command (com-touche :name t) ()
   (handle-pointer (find-pane-named *application-frame* 'canvas) *click-val*))
 
-;; (define-map-editor-command (com-set-size :name t) ((x 'integer) (y 'integer))
-;;   (let ((dx (- x *max-x*))		;Changes we're asked to make
-;; 	(dy (- y *max-y*)))
-;;     (if (> dx 0)				;Append x
-;;        (dotimes (i dx)
-;; 	 (incf *max-x*)
-;; 	 (push (make-instance 'node :pos-x *max-x* :pos-y *max-y* :value 0) *map*)))
-;;     (if (> dy 0)				;Append y
-;;        (dotimes (i dy)
-;; 	 (incf *max-y*)
-;; 	 (push (make-instance 'node :pos-x *max-x* :pos-y *max-y* :value 0) *map*)))
-;;     (if (and (< dx 0) (< dy 0)
-;; 	(remove-if (lambda (n) (< (slot-value n 'pos-x) x)
-;;   ))))))
+(define-map-editor-command (com-set-size :name t) ((x 'integer) (y 'integer))
+  (init-map x y))
   
 (define-map-editor-command (com-quit :name t) ()
   (frame-exit *application-frame*))
