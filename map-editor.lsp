@@ -85,7 +85,7 @@
   (handle-pointer (find-pane-named *application-frame* 'canvas) *click-val*))
 
 (define-map-editor-command (com-set-size :name t) ((x 'integer) (y 'integer))
-  (init-map x y))
+  (setf *map* (init-map x y)))
   
 (define-map-editor-command (com-quit :name t) ()
   (frame-exit *application-frame*))
