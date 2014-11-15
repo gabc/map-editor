@@ -41,12 +41,13 @@
    (canvas (make-pane 'canvas-pane
 		      :name 'canvas
 		      :incremental-redisplay t
-		      :display-function 'display-canvas))
+		      :display-function 'display-canvas
+		      :display-after-commands t))
    (int :interactor
 	:width 100
 	:height 50))
-   (:layouts
-    (default canvas int)))
+  (:layouts
+   (default canvas int)))
 
 (defun display-canvas (frame pane)
   (draw)
@@ -81,11 +82,21 @@
 (define-map-editor-command (com-set-value :name t) ((n 'integer))
   (setf *click-val* n))
 
+<<<<<<< HEAD
 (define-map-editor-command (com-touche :name t) ()
   (handle-pointer (find-pane-named *application-frame* 'canvas) *click-val*))
 
 (define-map-editor-command (com-set-size :name t) ((x 'integer) (y 'integer))
   (setf *map* (init-map x y)))
+=======
+(define-map-editor-command (com-touche :name t) ((x 'integer) (y 'integer))
+  (change-map (truncate (/ x *taille-carre*)) (truncate (/ y *taille-carre*)) *click-val*))
+  ;(handle-pointer (find-pane-named *application-frame* 'canvas) *click-val*))
+
+(define-map-editor-command (com-set-size :name t) ((x 'integer) (y 'integer))
+  (setf *map* ())
+  (init-map x y))
+>>>>>>> 4c1e26e3fb551858fbd9f2cd277260e939b23a92
   
 (define-map-editor-command (com-quit :name t) ()
   (frame-exit *application-frame*))
@@ -126,3 +137,11 @@
 
 (defun map-editor-main ()
   (run-frame-top-level (make-application-frame 'map-editor)))
+
+(define-presentation-to-command-translator touche-map
+    (blank-area com-touche map-editor
+		:gesture :select
+		:echo nil
+		:tester ((window) (typep window 'canvas-pane)))
+    (x y)
+  (list x y))
