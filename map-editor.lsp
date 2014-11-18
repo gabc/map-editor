@@ -7,7 +7,7 @@
 (defvar *taille-carre* 30)
 (defvar *click-val* 0)
 (defvar *save-file*)
-(defvar *save-format*)
+(defvar *save-format* "~a ~a ~a~%")
 
 (defclass node ()
     ((pos-x
@@ -40,6 +40,7 @@
 		      :name 'canvas
 		      :incremental-redisplay t
 		      :display-function 'display-canvas
+		      ;; :display-time t
 		      :display-after-commands t))
    (int :interactor
 	:width 100
@@ -101,6 +102,9 @@
 
 (define-map-editor-command (com-set-save-format :name t) ((s 'string))
   (setf *save-format* s))
+
+;; (define-map-editor-command (com-show-save-format :name t) ()
+;;   *save-format*)
 
 (defun handle-pointer (pane value)
   (tracking-pointer (pane)
