@@ -25,9 +25,11 @@
 (defvar *max-y* 5)
 
 (defun init-map (x y)
-  (loop for i upto (- x 1)
-     do (loop for j upto (- y 1)
-	   do (push (make-instance 'node :pos-x i :pos-y j :value 0) *map*))))
+  (let ((map))
+    (loop for i upto (- x 1)
+       do (loop for j upto (- y 1)
+	     do (push (make-instance 'node :pos-x i :pos-y j :value 0) map)))
+  map))
 
 (defclass canvas-pane (application-pane)
   ((first-point-x :initform nil)
@@ -81,14 +83,12 @@
 (define-map-editor-command (com-set-value :name t) ((n 'integer))
   (setf *click-val* n))
 
-(define-map-editor-command (com-touche :name t) ((x 'integer) (y 'integer))
-  (change-map (truncate (/ x *taille-carre*)) (truncate (/ y *taille-carre*)) *click-val*))
-  ;(handle-pointer (find-pane-named *application-frame* 'canvas) *click-val*))
+(define-map-editor-command (com-touche :name t) ()
+  (handle-pointer (find-pane-named *application-frame* 'canvas) *click-val*))
 
 (define-map-editor-command (com-set-size :name t) ((x 'integer) (y 'integer))
-  (setf *map* ())
-  (init-map x y))
-  
+  (setf *map* (init-map x y)))
+
 (define-map-editor-command (com-quit :name t) ()
   (frame-exit *application-frame*))
 
