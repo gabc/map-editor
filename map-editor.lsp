@@ -26,10 +26,12 @@
 
 (defun init-map (x y)
   (let ((map))
+    (setf *max-x* x
+	  *max-y* y)
     (loop for i upto (- x 1)
        do (loop for j upto (- y 1)
 	     do (push (make-instance 'node :pos-x i :pos-y j :value 0) map)))
-  map))
+  (nreverse map)))
 
 (defclass canvas-pane (application-pane)
   ((first-point-x :initform nil)
@@ -83,7 +85,7 @@
 (define-map-editor-command (com-set-value :name t) ((n 'integer))
   (setf *click-val* n))
 
-(define-map-editor-command (com-touche :name t) ()
+(define-map-editor-command (com-touche :name t) ((x 'integer) (y 'integer))
   (handle-pointer (find-pane-named *application-frame* 'canvas) *click-val*))
 
 (define-map-editor-command (com-set-size :name t) ((x 'integer) (y 'integer))
@@ -139,3 +141,30 @@
 		:tester ((window) (typep window 'canvas-pane)))
     (x y)
   (list x y))
+
+
+;; Debug
+(defgeneric printn (n))
+(defmethod printn ((n node))
+  (with-slots ((x pos-x) (y pos-y) (v value)) n
+    (format t "x: ~a y: ~a val: ~a~%" x y v)))
+
+(defun print-map (m)
+  (mapcar #'printn m))
+
+(defmethod node-pos= ((n1 node) (n2 node))
+  "Tests only for the position"
+  (with-slots ((x1 pos-x) (y1 pos-y)) n1
+    (with-slots ((x2 pos-x) (y2 pos-y)) n2
+      (and (= x1 x2) (= y1 y2)))))
+
+(defmethod node= ((n1 node) (n2 node))
+  "Tests for all the slots"
+  (with-slots ((x1 pos-x) (y1 pos-y) (v1 value)) n1
+    (with-slots ((x2 pos-x) (y2 pos-y) (v2 value)) n2
+      (and (= x1 x2) (= y1 y2) (= v1 v2)))))
+
+;; (defun resize-map (orig-map new-x new-y)
+;;   (let ((temp (init-map new-x new-y)))
+;;     (if (> new-x *max-x*)		;plus grand
+;; 	)))
